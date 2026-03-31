@@ -1,0 +1,94 @@
+实现代码：
+public class PhoneBill {
+
+    // 计费常量
+    private static final double RATE_UNDER_20 = 0.05;
+    private static final double BASE_FEE_OVER_20 = 1.00;
+    private static final double RATE_OVER_20 = 0.10;
+    private static final int MAX_ALLOWED_SECONDS = 30 * 60 * 60; // 30小时=108000秒
+
+    /**
+     * 根据通话秒数计算话费
+     * @param seconds 通话秒数
+     * @return 总费用
+     */
+    public double calculateFee(long seconds) {
+        // 1. 非法输入校验
+        if (seconds < 0) {
+            throw new IllegalArgumentException("通话时间不能为负数");
+        }
+        if (seconds == 0) {
+            throw new IllegalArgumentException("通话时间不能为0");
+        }
+        if (seconds > MAX_ALLOWED_SECONDS) {
+            throw new IllegalArgumentException("通话时间不能超过30小时");
+        }
+
+        // 2. 向上取整：秒转分钟（不足1分钟按1分钟）
+        long minutes = (seconds + 59) / 60;
+
+        // 3. 计费规则
+        if (minutes <= 20) {
+            return minutes * RATE_UNDER_20;
+        } else {
+            long overMinutes = minutes - 20;
+            return BASE_FEE_OVER_20 + overMinutes * RATE_OVER_20;
+        }
+    }
+}
+测试代码：
+
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+class PhoneBillTest {
+    private final PhoneBill bill = new PhoneBill();
+
+    // ========== 有效等价类 ==========
+    // EC1：1分钟内（1~60秒）
+    @Test
+    void calculateFee_1Second() {
+        assertEquals(0.05, bill.calculateFee(1));
+    }
+
+    @Test
+    void calculateFee_60Seconds() {
+        assertEquals(0.05, bill.calculateFee(60));
+    }
+
+    // EC2：1~20分钟
+    @Test
+    void calculateFee_20Minutes() {
+        assertEquals(1.00, bill.calculateFee(1200));
+    }
+
+    // EC3：超过20分钟，≤30小时
+    @Test
+    void calculateFee_21Minutes() {
+        assertEquals(1.10, bill.calculateFee(1260));
+    }
+
+    @Test
+    void calculateFee_Max30Hours() {
+        assertDoesNotThrow(() -> bill.calculateFee(108000));
+    }
+
+    // ========== 无效等价类 ==========
+    // EC4：0秒
+    @Test
+    void calculateFee_0Second() {
+        assertThrows(IllegalArgumentException.class, () -> bill.calculateFee(0));
+    }
+
+    // EC5：负数
+    @Test
+    void calculateFee_Negative() {
+        assertThrows(IllegalArgumentException.class, () -> bill.calculateFee(-10));
+    }
+
+    // EC6：超过30小时
+    @Test
+    void calculateFee_Over30Hours() {
+        assertThrows(IllegalArgumentException.class, () -> bill.calculateFee(108001));
+    }
+}
