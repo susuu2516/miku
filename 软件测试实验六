@@ -1,0 +1,123 @@
+DirectionTest 完整代码：
+
+package nl.tudelft.jpacman.board;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+/**
+ * A very simple (and not particularly useful)
+ * test class to have a starting point where to put tests.
+ *
+ * @author Arie van Deursen
+ */
+public class DirectionTest {
+    /**
+     * Do we get the correct delta when moving north?
+     */
+    @Test
+    void testNorth() {
+        Direction north = Direction.valueOf("NORTH");
+
+        assertThat(north.getDeltaX()).isEqualTo(0);
+        assertThat(north.getDeltaY()).isEqualTo(-1);
+    }
+
+    // 测试 南方向
+    @Test
+    void testSouth() {
+        Direction south = Direction.valueOf("SOUTH");
+
+        assertThat(south.getDeltaX()).isEqualTo(0);
+        assertThat(south.getDeltaY()).isEqualTo(1);
+    }
+
+    // 测试 东方向
+    @Test
+    void testEast() {
+        Direction east = Direction.valueOf("EAST");
+
+        assertThat(east.getDeltaX()).isEqualTo(1);
+        assertThat(east.getDeltaY()).isEqualTo(0);
+    }
+
+    // 测试 西方向
+    @Test
+    void testWest() {
+        Direction west = Direction.valueOf("WEST");
+
+        assertThat(west.getDeltaX()).isEqualTo(-1);
+        assertThat(west.getDeltaY()).isEqualTo(0);
+    }
+}
+OccupantTest 完整代码:
+
+package nl.tudelft.jpacman.board;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+/**
+ * Test suite to confirm that {@link Unit}s correctly (de)occupy squares.
+ *
+ * @author Jeroen Roosen
+ *
+ */
+class OccupantTest {
+
+    /**
+     * The unit under test.
+     */
+    private Unit unit;
+
+    /**
+     * Resets the unit under test.
+     */
+    @BeforeEach
+    void setUp() {
+        unit = new BasicUnit();
+    }
+
+    /**
+     * Asserts that a unit has no square to start with.
+     */
+    @Test
+    void noStartSquare() {
+        // 已完成：测试没有调用occupy时，Unit不占据Square
+        assertThat(unit).isNotNull();
+        assertThat(unit.hasSquare()).isFalse();
+    }
+
+    /**
+     * Tests that the unit indeed has the target square as its base after
+     * occupation.
+     */
+    @Test
+    void testOccupy() {
+        Square square = new BasicSquare();
+        unit.occupy(square);
+
+        assertThat(unit.getSquare()).isEqualTo(square);
+        assertThat(square.getOccupants()).contains(unit);
+    }
+
+    /**
+     * 测试重复占用同一个方格，占用关系仍然正确
+     */
+    @Test
+    void testReoccupy() {
+        Square square = new BasicSquare();
+        // 连续调用两次occupy
+        unit.occupy(square);
+        unit.occupy(square);
+
+        // 验证Unit仍然持有该方格
+        assertThat(unit.getSquare()).isEqualTo(square);
+        // 验证方格仍然包含该Unit
+        assertThat(square.getOccupants()).contains(unit);
+    }
+}
