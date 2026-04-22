@@ -1,0 +1,175 @@
+实现代码：
+ package mimic;
+
+public class MyLinkedList<T> {
+    private Node<T> head;
+    private Node<T> tail;
+    private int size;
+
+    private static class Node<T> {
+        T data;
+        Node<T> prev;
+        Node<T> next;
+
+        Node(T data) {
+            this.data = data;
+        }
+    }
+
+    public MyLinkedList() {
+        head = null;
+        tail = null;
+        size = 0;
+    }
+
+    // 尾部添加元素
+    public void add(T data) {
+        Node<T> newNode = new Node<>(data);
+        if (isEmpty()) {
+            head = newNode;
+            tail = newNode;
+        } else {
+            tail.next = newNode;
+            newNode.prev = tail;
+            tail = newNode;
+        }
+        size++;
+    }
+
+    // 删除指定索引元素
+    public boolean remove(int index) {
+        if (index < 0 || index >= size) {
+            throw new IndexOutOfBoundsException("索引非法");
+        }
+
+        Node<T> current = findNode(index);
+
+        // 只有一个节点
+        if (size == 1) {
+            head = null;
+            tail = null;
+        }
+        // 删除头节点
+        else if (current == head) {
+            head = head.next;
+            head.prev = null;
+        }
+        // 删除尾节点
+        else if (current == tail) {
+            tail = tail.prev;
+            tail.next = null;
+        }
+        // 删除中间节点
+        else {
+            current.prev.next = current.next;
+            current.next.prev = current.prev;
+        }
+
+        size--;
+        return true;
+    }
+
+    // 获取指定索引元素
+    public T get(int index) {
+        if (index < 0 || index >= size) {
+            throw new IndexOutOfBoundsException();
+        }
+        return findNode(index).data;
+    }
+
+    // 查找节点
+    private Node<T> findNode(int index) {
+        Node<T> current = head;
+        for (int i = 0; i < index; i++) {
+            current = current.next;
+        }
+        return current;
+    }
+
+    public boolean isEmpty() {
+        return size == 0;
+    }
+
+    public int size() {
+        return size;
+    }
+}测试代码：
+package mimic;
+
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class MyLinkedListTest {
+
+    // 用例1：删除中间节点
+    @Test
+    void removeMiddleNode() {
+        MyLinkedList<Integer> list = new MyLinkedList<>();
+        list.add(1);
+        list.add(2);
+        list.add(3);
+        list.add(4);
+
+        assertTrue(list.remove(1));
+        assertEquals(3, list.get(1));
+        assertEquals(3, list.size());
+    }
+
+    // 用例2：删除头节点
+    @Test
+    void removeFirstNode() {
+        MyLinkedList<Integer> list = new MyLinkedList<>();
+        list.add(1);
+        list.add(2);
+        list.add(3);
+
+        assertTrue(list.remove(0));
+        assertEquals(2, list.get(0));
+    }
+
+    // 用例3：删除尾节点
+    @Test
+    void removeLastNode() {
+        MyLinkedList<Integer> list = new MyLinkedList<>();
+        list.add(1);
+        list.add(2);
+        list.add(3);
+
+        assertTrue(list.remove(2));
+        assertEquals(2, list.size());
+    }
+
+    // 用例4：删除唯一节点
+    @Test
+    void removeSingleNode() {
+        MyLinkedList<Integer> list = new MyLinkedList<>();
+        list.add(5);
+
+        assertTrue(list.remove(0));
+        assertTrue(list.isEmpty());
+    }
+
+    // 用例5：空链表删除
+    @Test
+    void removeFromEmptyList() {
+        MyLinkedList<Integer> list = new MyLinkedList<>();
+        assertThrows(IndexOutOfBoundsException.class, () -> list.remove(0));
+    }
+
+    // 用例6：负索引
+    @Test
+    void removeNegativeIndex() {
+        MyLinkedList<Integer> list = new MyLinkedList<>();
+        list.add(1);
+        assertThrows(IndexOutOfBoundsException.class, () -> list.remove(-1));
+    }
+
+    // 用例7：索引 = 长度
+    @Test
+    void removeIndexEqualsSize() {
+        MyLinkedList<Integer> list = new MyLinkedList<>();
+        list.add(1);
+        list.add(2);
+        assertThrows(IndexOutOfBoundsException.class, () -> list.remove(2));
+    }
+}}
