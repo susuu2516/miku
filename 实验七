@@ -1,0 +1,180 @@
+ClydeTest  完整代码：
+
+package nl.tudelft.jpacman.npc.ghost;
+
+import nl.tudelft.jpacman.board.BoardFactory;
+import nl.tudelft.jpacman.board.Direction;
+import nl.tudelft.jpacman.level.*;
+import nl.tudelft.jpacman.sprite.PacManSprites;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import java.util.Optional;
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class ClydeTest {
+
+    private PacManSprites sprites;
+    private PlayerFactory playerFactory;
+    private GhostFactory ghostFactory;
+    private BoardFactory boardFactory;
+    private LevelFactory levelFactory;
+    private GhostMapParser mapParser;
+    @BeforeEach
+    void setUp() {
+        sprites = new PacManSprites();
+        playerFactory = new PlayerFactory(sprites);
+        ghostFactory = new GhostFactory(sprites);
+        boardFactory = new BoardFactory(sprites);
+        levelFactory = new LevelFactory(boardFactory, ghostFactory, sprites);
+        mapParser = new GhostMapParser(levelFactory, boardFactory, ghostFactory);
+    }
+
+  
+    @Test
+    void testChaseWhenFarAway() {
+        String[] map = {
+            "############",
+            "#P         C#",
+            "############"
+        };
+        Level level = mapParser.parseMap(map);
+        Player player = playerFactory.createPlayer();
+        level.registerPlayer(player);
+
+        Clyde clyde = Navigation.findUnitInBoard(Clyde.class, level.getBoard());
+        assertThat(clyde).isNotNull();
+
+        Optional<Direction> dir = clyde.nextAiMove();
+        assertThat(dir).isPresent();
+        assertThat(dir.get()).isEqualTo(Direction.WEST);
+    }
+
+   
+    @Test
+    void testRandomWhenClose() {
+        String[] map = {
+            "############",
+            "#P C       #",
+            "############"
+        };
+        Level level = mapParser.parseMap(map);
+        Player player = playerFactory.createPlayer();
+        level.registerPlayer(player);
+
+        Clyde clyde = Navigation.findUnitInBoard(Clyde.class, level.getBoard());
+        Optional<Direction> dir = clyde.nextAiMove();
+        assertThat(dir).isPresent();
+    }
+    @Test
+    void testNoPlayerNoMove() {
+        String[] map = {
+            "############",
+            "#  C       #",
+            "############"
+        };
+        Level level = mapParser.parseMap(map);
+        Clyde clyde = Navigation.findUnitInBoard(Clyde.class, level.getBoard());
+
+        Optional<Direction> dir = clyde.nextAiMove();
+        assertThat(dir).isEmpty();
+    }
+
+   
+    @Test
+    void testChaseFromEastToWest() {
+        String[] map = {
+            "############",
+            "#C        P#",
+            "############"
+        };
+        Level level = mapParser.parseMap(map);
+        Player player = playerFactory.createPlayer();
+        level.registerPlayer(player);
+
+        Clyde clyde = Navigation.findUnitInBoard(Clyde.class, level.getBoard());
+        Optional<Direction> dir = clyde.nextAiMove();
+        assertThat(dir.get()).isEqualTo(Direction.EAST);
+    }
+GhostMapParser： 完整代码:
+
+package nl.tudelft.jpacman.npc.ghost;
+
+import nl.tudelft.jpacman.board.BoardFactory;
+import nl.tudelft.jpacman.board.Direction;
+import nl.tudelft.jpacman.board.Square;
+import nl.tudelft.jpacman.level.Level;
+import nl.tudelft.jpacman.level.LevelFactory;
+import nl.tudelft.jpacman.level.Player;
+import nl.tudelft.jpacman.level.PlayerFactory;
+import nl.tudelft.jpacman.points.DefaultPointCalculator;
+import nl.tudelft.jpacman.points.PointCalculator;
+import nl.tudelft.jpacman.sprite.PacManSprites;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class ClydeTest {
+
+    private Level level;
+    private Player player;
+    private Clyde clyde;
+
+    @BeforeEach
+    void setUp() {
+       
+        PacManSprites sprites = new PacManSprites();
+        GhostFactory ghostFactory = new GhostFactory(sprites);
+        BoardFactory boardFactory = new BoardFactory(sprites);
+        PlayerFactory playerFactory = new PlayerFactory(sprites);
+        PointCalculator pointCalculator = new DefaultPointCalculator();
+        LevelFactory levelFactory = new LevelFactory(sprites, ghostFactory, pointCalculator);
+        GhostMapParser parser = new GhostMapParser(levelFactory, boardFactory, ghostFactory);
+        level = parser.parseMap(Arrays.asList(
+            "#####",
+            "#P  #",
+            "#   #",
+            "#  C#",
+            "#####"
+        ));
+        player = playerFactory.createPacMan();
+        clyde = (Clyde) ghostFactory.createClyde();
+
+      
+        Square square1 = level.getBoard().squareAt(1, 1);
+        Square square2 = level.getBoard().squareAt(3, 3);
+        player.occupy(square1);
+        clyde.occupy(square2);
+
+       
+        level.registerPlayer(player);
+    }
+
+  
+    @Test
+    void clydeShouldExist() {
+        assertThat(clyde).isNotNull();
+    }
+
+    
+    @Test
+    void clydeFarDistanceChase() {
+        Optional<Direction> move = clyde.nextAiMove();
+        assertThat(move).isPresent();
+    }
+    @Test
+    void clydeCloseDistanceRun() {
+     
+        Square nearSquare = level.getBoard().squareAt(2, 1);
+        clyde.occupy(nearSquare);
+
+        Optional<Direction> move = clyde.nextAiMove();
+        assertThat(move).isPresent();
+    }
+    @Test
+    void nextAiMoveHasValue() {
+        Optional<Direction> move = clyde.nextAiMove();
+        assertThat(move).isPresent();
