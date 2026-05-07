@@ -1,0 +1,97 @@
+package nl.tudelft.jpacman.level;
+
+import nl.tudelft.jpacman.PacmanConfigurationException;
+import nl.tudelft.jpacman.board.Board;
+import nl.tudelft.jpacman.board.BoardFactory;
+import nl.tudelft.jpacman.board.Square;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Collections;
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+@ExtendWith(MockitoExtension.class)
+public class MapParserTest {
+
+    // 模拟MapParser依赖的工厂类
+    @Mock
+    private LevelFactory levelFactory;
+    @Mock
+    private BoardFactory boardFactory;
+
+    // 将模拟的依赖注入被测类
+    @InjectMocks
+    private MapParser mapParser;
+
+    // 辅助模拟对象
+    @Mock
+    private Square mockGround;
+    @Mock
+    private Pellet mockPellet;
+    @Mock
+    private Board mockBoard;
+    @Mock
+    private Level mockLevel;
+
+    // 测试用例1：正常场景-地面/阳光字符，验证工厂交互
+    @Test
+    public void testParseMap_GroundTile_VerifyFactoryInteraction() {
+        // 1. 准备测试数据
+        List<String> mockMap = Collections.singletonList(" ");
+        // 2. 方法打桩，定义模拟对象的行为
+        when(boardFactory.createGround()).thenReturn(mockGround);
+        when(boardFactory.createBoard(any(Square[][].class))).thenReturn(mockBoard);
+        when(levelFactory.createLevel(any(Board.class), anyList(), anyList())).thenReturn(mockLevel);
+
+        // 3. 执行被测方法
+        Level result = mapParser.parseMap(mockMap);
+
+        // 4. 结果断言与交互验证
+        assertNotNull(result);
+        verify(boardFactory, times(1)).createGround();
+        verify(boardFactory, times(1)).createBoard(any(Square[][].class));
+        verify(levelFactory, times(1)).createLevel(any(Board.class), anyList(), anyList());
+    }
+
+    // 测试用例2：正常场景-豆子字符，验证工厂交互
+    @Test
+    public void testParseMap_PelletTile_VerifyFactoryInteraction() {
+        List<String> mockMap = Collections.singletonList(".");
+        when(boardFactory.createGround()).thenReturn(mockGround);
+        when(levelFactory.createPellet()).thenReturn(mockPellet);
+        when(boardFactory.createBoard(any(Square[][].class))).thenReturn(mockBoard);
+        when(levelFactory.createLevel(any(Board.class), anyList(), anyList())).thenReturn(mockLevel);
+
+        mapParser.parseMap(mockMap);
+
+        verify(levelFactory, times(1)).createPellet();
+        verify(mockPellet, times(1)).occupy(mockGround);
+    }
+
+    // 测试用例3：异常场景-无效地图字符
+    @Test
+    public void testParseMap_InvalidCharacter_ThrowsException() {
+        List<String> badMap = Collections.singletonList("X");
+        assertThrows(PacmanConfigurationException.class, () -> mapParser.parseMap(badMap));
+    }
+
+    // 测试用例4：异常场景-null空输入
+    @Test
+    public void testParseMap_NullInput_ThrowsException() {
+        assertThrows(PacmanConfigurationException.class, () -> mapParser.parseMap((List<String>) null));
+    }
+
+    // 测试用例5：异常场景-地图行长度不一致
+    @Test
+    public void testParseMap_UnevenRows_ThrowsException() {
+        List<String> unevenMap = List.of(" ", "##");
+        assertThrows(PacmanConfigurationException.class, () -> mapParser.parseMap(unevenMap));
+    }
